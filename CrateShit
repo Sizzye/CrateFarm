@@ -1,0 +1,72 @@
+_G.CrateFarm = true
+
+local succ, err = pcall(function()
+workspace.Gravity = 100
+
+if game:GetService('ReplicatedStorage').Requests:FindFirstChild('FallDamage') then
+    game:GetService('ReplicatedStorage').Requests:FindFirstChild('FallDamage'):Destroy()
+end
+
+local Names = {
+    KIRA = "Kira";
+    KASHYYK = "Kashyyk";
+    ILLUM = "Illum";
+    TATTOOINE = "Tattooine";
+}
+
+local Destinations = {
+    Kira = CFrame.new(-324,1639,2619);
+    Kashyyk = CFrame.new(-7253,1988,-3129);
+    Illum = CFrame.new(-540,1727,-7167);
+    Tattooine = CFrame.new(7808,1649,5372);
+    Safe = CFrame.new(0,25000,0);
+}
+
+local Delay = 15
+
+local Client = game.Players.LocalPlayer
+
+local UI = Client.PlayerGui.HUD.Postal.Main.ScrollingFrame
+
+local Event = game:GetService('ReplicatedStorage'):WaitForChild('Requests'):WaitForChild('AccessPosts')
+
+while task.wait(5) do
+    local Task = nil
+    local Reward = 0
+    for _,Option in pairs(UI:GetChildren()) do
+        local r = tonumber(string.match(Option.Reward.Text,'%d'))
+        if r > Reward then
+            Task = Option.RouteName.Text
+            Reward = r
+        end
+    end
+    
+    local PO = nil
+    local Dist = 10
+    for _,Object in pairs(workspace.World:GetChildren()) do
+        if Object.Name == 'PostOffice' then
+            local d = (Object.Position - Client.Character.PrimaryPart.Position).Magnitude
+            if d < Dist then
+                PO = Object
+                Dist = d
+            end
+        end
+    end
+    
+    if PO and Task then
+        Client.Character.PrimaryPart.CFrame = PO.CFrame
+        Event:InvokeServer(PO,Names[Task])
+        
+        if Client.Character and Client.Character.PrimaryPart then
+            Client.Character.PrimaryPart.CFrame = Destinations['Safe']
+        end
+        task.wait(Delay)
+        if Client.Character and Client.Character.PrimaryPart then
+            Client.Character.PrimaryPart.CFrame = Destinations[Names[Task]]
+        end
+    elseif not PO then
+        Client.Character.PrimaryPart.CFrame = Destinations['Kira']
+    end
+end
+end)
+warn(succ,err)
